@@ -1,0 +1,9 @@
+# site clone + scraped assets (huge; regenerate via scrape_catalog.py)
+www.sextoydistributing.com/
+www.sextoydistributing.com.zip
+# derived catalog data
+catalog/
+# session/private
+.remember/
+.DS_Store
+node_modules/
