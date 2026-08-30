@@ -101,15 +101,27 @@ systemctl restart needlube-medusa
   needed eventually for real volume; you receive and hold BTC (volatility yours; each
   disposal is a taxable event — track basis); upside: no chargebacks, no deplatforming.
 
-## Cloudflare (token active — two account-side gates open)
+## Cloudflare — LIVE at https://morelube.com (gated)
 
-- Account token in repo `.auth` (gitignored) verified **active**. But: **no zone added**
-  (domain not onboarded — add domain at dash.cloudflare.com or via API, then point
-  nameservers at Cloudflare from the registrar) and **R2 not enabled** (dashboard → R2 →
-  enable; needed for offsite backups via the provided S3 creds).
-- Once zone exists: cloudflared Tunnel → localhost:80, DNS route, **Cloudflare Access
-  in front until age gate + payments are live** (do not expose an orderable adult store
-  publicly before then), then image-URL rewrite (below) + BASE_URL/CORS update.
+- Zone `morelube.com` (id c552092285921d67d435e2ea544aa39f) active — registered via
+  Cloudflare Registrar. Tunnel **needlube-nuc** (f8429012-e2ac-4f60-b6b7-3571267917d9),
+  cloudflared as systemd service on the NUC, ingress: morelube.com + www → localhost:80
+  (Caddy). DNS: proxied CNAMEs to `<tunnel-id>.cfargotunnel.com`. No inbound ports opened.
+- **Launch gate:** Caddy `basic_auth` over the whole site until age verification +
+  payments are live. Credentials in `/opt/needlube/secrets/site-gate` on the NUC.
+  Remove the `basic_auth` block in `/opt/needlube/caddy/Caddyfile` + `docker compose
+  restart caddy` to open the site (only after age gate + payments).
+- Image URLs migrated (18,724 rows) to `https://morelube.com/catalog-images/...`;
+  CORS/BASE_URL updated; storefront rebuilt.
+- **R2 still not enabled** (needed for offsite backups): dash.cloudflare.com → account
+  home → left sidebar **"R2 Object Storage"** (below Workers & Pages; needs a payment
+  method on the account the first time). If truly absent, the account may lack the
+  entitlement — open the link r2.cloudflarestorage.com console path or contact support.
+- Stray Worker `needlube` exists in the account (no routes, harmless) — created via a
+  dashboard flow; delete or ignore.
+- MCP: PayPal MCP registered in Claude Code (sandbox app via
+  `scripts/paypal-mcp.sh` launcher, creds in `.paypalauth`, gitignored); Cloudflare MCP
+  plugin installed, OAuth pending user click-through.
 
 ## Not yet wired (blocked on external vendors — design plan §5/§8 gates)
 
