@@ -78,6 +78,39 @@ systemctl restart needlube-medusa
 
 **Redeploy storefront:** `cd /opt/needlube/store/apps/storefront && npm run build && systemctl restart needlube-storefront`
 
+## Crypto billing (BTCPay Server — installed, wallet pending)
+
+- **BTCPay Server** self-hosted at `http://192.168.4.75:23000` (systemd `btcpayserver`,
+  docker stack in `/root/btcpayserver-docker`, pruned mainnet bitcoind ~25 GB cap via
+  `opt-save-storage-xs`, web port set by `NOREVERSEPROXY_HTTP_PORT=23000` in
+  `/etc/profile.d/btcpay-env.sh`). Bitcoind is doing initial sync (~1–2 days); invoices
+  can't settle until synced. Ops: `btcpay-up.sh` / `btcpay-down.sh` / `btcpay-update.sh`,
+  `bitcoin-cli.sh getblockchaininfo` for sync progress.
+- **First-run (manual, owner):** open :23000 → register (first account = server admin) →
+  create store → attach wallet with **your own wallet's xpub (watch-only)** — do NOT keep
+  a hot-wallet seed on this box → Store Settings → Webhooks → add
+  `http://192.168.4.75:9000/webhooks/btcpay` with secret = `BTCPAY_WEBHOOK_SECRET` from
+  `/opt/needlube/.env`, events: Invoice settled.
+- **Membership-in-crypto model (no card rails yet):** prepaid periods, not auto-renew.
+  Invoice created with metadata `{email, plan_code, months}` → on settlement
+  `/webhooks/btcpay` (HMAC-verified) translates to the canonical billing payload →
+  `/webhooks/billing` grants `member_pricing` with `expires_at = now + months`. Expiry is
+  data; no cron needed to revoke. TODO: renewal-reminder email job (T-7d) + checkout UI
+  that creates the BTCPay invoice (Greenfield API) for membership purchase.
+- **Honest caveats:** only a small minority of shoppers pay in crypto — card rails still
+  needed eventually for real volume; you receive and hold BTC (volatility yours; each
+  disposal is a taxable event — track basis); upside: no chargebacks, no deplatforming.
+
+## Cloudflare (token active — two account-side gates open)
+
+- Account token in repo `.auth` (gitignored) verified **active**. But: **no zone added**
+  (domain not onboarded — add domain at dash.cloudflare.com or via API, then point
+  nameservers at Cloudflare from the registrar) and **R2 not enabled** (dashboard → R2 →
+  enable; needed for offsite backups via the provided S3 creds).
+- Once zone exists: cloudflared Tunnel → localhost:80, DNS route, **Cloudflare Access
+  in front until age gate + payments are live** (do not expose an orderable adult store
+  publicly before then), then image-URL rewrite (below) + BASE_URL/CORS update.
+
 ## Not yet wired (blocked on external vendors — design plan §5/§8 gates)
 
 1. **Payment gateway** (NMI/CCBill/Segpay): checkout currently uses Medusa's system/manual
