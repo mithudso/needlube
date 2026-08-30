@@ -95,8 +95,17 @@ systemctl restart needlube-medusa
   Invoice created with metadata `{email, plan_code, months}` → on settlement
   `/webhooks/btcpay` (HMAC-verified) translates to the canonical billing payload →
   `/webhooks/billing` grants `member_pricing` with `expires_at = now + months`. Expiry is
-  data; no cron needed to revoke. TODO: renewal-reminder email job (T-7d) + checkout UI
-  that creates the BTCPay invoice (Greenfield API) for membership purchase.
+  data; no cron needed to revoke.
+- **Membership checkout LIVE at /us/membership** (both rails share the prepaid-months
+  model): plans in `backend/src/lib/membership.ts` (PLACEHOLDER prices $14.95/1mo,
+  $39.95/3mo, $129.95/12mo — tune!). Routes: GET /store/membership/plans ·
+  POST /store/membership/btcpay-invoice (503 until BTCPAY_STORE_ID + BTCPAY_API_KEY set
+  in the backend env — create a Greenfield API key with btcpay.store.cancreateinvoice) ·
+  POST paypal-order / paypal-capture (SANDBOX; flip PAYPAL_ENV=live ONLY after written
+  AUP pre-approval). BTCPay public at https://btcpay.morelube.com (tunnel). Renewal
+  reminders: daily 09:00 job flags grants expiring ≤7d into entitlement_events (email
+  TODO — no ESP yet). Age gate: client self-attestation interstitial, 365-day cookie
+  `nl_age_ok` (ID-grade verification still required before ungating in covered states).
 - **Honest caveats:** only a small minority of shoppers pay in crypto — card rails still
   needed eventually for real volume; you receive and hold BTC (volatility yours; each
   disposal is a taxable event — track basis); upside: no chargebacks, no deplatforming.
