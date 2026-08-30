@@ -23,11 +23,16 @@ Deployed per `needlube-design-plan.md`. Everything lives under `/opt/needlube` o
 
 ## Data seeded
 
-- 3,208 products from the STD clone (`/opt/needlube/catalog/products.json`), 119 brand
-  collections, US region (usd), all published to the Default Sales Channel.
-- **Placeholder pricing:** public price = STD listed × 1.4 (rounded to .95);
-  member price = STD listed price, via price list **"Member pricing"** gated to customer
-  group **"Members"**. Replace both when a real distributor feed provides cost/MAP/MSRP.
+- 3,208 products from the full scrape (`/opt/needlube/catalog/catalog.json`), 119 brand
+  collections, **302 categories**, US region (usd), all published to the Default Sales Channel.
+- **Real pricing** (from the scrape): public price = `price_msrp` ("Recommended Retail");
+  member price = `price_wholesale` (STD near-wholesale), via price list **"Member pricing"**
+  gated to customer group **"Members"**. UPC/manufacturer/msrp/wholesale in product metadata.
+- **Images self-hosted:** 36,441 files (14 GB) in `/opt/needlube/static/catalog`, served by
+  Caddy at `/catalog-images/*`. Product image URLs are absolute
+  `http://192.168.4.75/catalog-images/...` — when the real domain lands, bulk-rewrite with:
+  `UPDATE image SET url = replace(url, 'http://192.168.4.75', 'https://yourdomain');`
+  then restart backend + rebuild storefront.
 - Membership schema in Postgres schema `membership` (members, subscriptions, access_grants,
   entitlement_events, supplier_skus, dropship_jobs, feed_sync_runs, member_savings, age_checks).
 
@@ -77,6 +82,9 @@ systemctl restart needlube-medusa
 
 1. **Payment gateway** (NMI/CCBill/Segpay): checkout currently uses Medusa's system/manual
    provider — orders can be placed without real payment. Do NOT expose publicly until wired.
+   **Squarespace is not an option for this** — its API is store-data-only (no external
+   checkout), and its processors (Stripe-family/PayPal) restrict adult catalogs; see
+   `adult-ecommerce-store-build-plan.md` §1. Squarespace = brand/content microsite at most.
 2. **Distributor feed + order placement** (STD/XR account): feed-sync + dropship workers
    pending credentials; `dropship_jobs` rows queue up meanwhile.
 3. **Cloudflare Tunnel / domain / public TLS** — LAN-only today, by design until 1–2 exist.
