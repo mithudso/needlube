@@ -113,10 +113,10 @@ systemctl restart needlube-medusa
   restart caddy` to open the site (only after age gate + payments).
 - Image URLs migrated (18,724 rows) to `https://morelube.com/catalog-images/...`;
   CORS/BASE_URL updated; storefront rebuilt.
-- **R2 still not enabled** (needed for offsite backups): dash.cloudflare.com → account
-  home → left sidebar **"R2 Object Storage"** (below Workers & Pages; needs a payment
-  method on the account the first time). If truly absent, the account may lack the
-  entitlement — open the link r2.cloudflarestorage.com console path or contact support.
+- **R2 offsite backups LIVE:** nightly cron pushes DB dumps + env/secrets tarball to
+  bucket `needlube-backups` (rclone remote `r2` on the NUC, config
+  `/root/.config/rclone/rclone.conf`, rclone v1.75 — distro v1.60 fails on R2 with 501s).
+  Secrets tarballs pruned after 30 days. Restore: `rclone copy r2:needlube-backups/db/... /tmp/`.
 - Stray Worker `needlube` exists in the account (no routes, harmless) — created via a
   dashboard flow; delete or ignore.
 - MCP: PayPal MCP registered in Claude Code (sandbox app via
