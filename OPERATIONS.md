@@ -29,7 +29,10 @@ Deployed per `needlube-design-plan.md`. Everything lives under `/opt/needlube` o
   member price = `price_wholesale` (STD near-wholesale), via price list **"Member pricing"**
   gated to customer group **"Members"**. UPC/manufacturer/msrp/wholesale in product metadata.
 - **Images self-hosted:** 36,441 files (14 GB) in `/opt/needlube/static/catalog`, served by
-  Caddy at `/catalog-images/*`. Product image URLs are absolute
+  Caddy at `/catalog-images/*`. Full galleries (no per-product cap, max 24) — the four
+  Medusa starter demo products/categories were purged; re-run
+  `npx medusa exec ./src/scripts/purge-demo-and-full-images.ts` (idempotent) after any
+  re-seed. Product image URLs are absolute
   `http://192.168.4.75/catalog-images/...` — when the real domain lands, bulk-rewrite with:
   `UPDATE image SET url = replace(url, 'http://192.168.4.75', 'https://yourdomain');`
   then restart backend + rebuild storefront.
